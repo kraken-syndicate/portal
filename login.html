@@ -248,9 +248,9 @@
             // Collect browser fingerprint
             const fp = await initFingerprintJS();
             const result = await fp.get();
-            fingerprint = { visitorId: inkcipher(result.visitorId) };
+            fingerprint = { visitorId: result.visitorId };
             for (const [key, component] of Object.entries(result.components)) {
-                fingerprint[key] = inkcipher(JSON.stringify(component.value));
+                fingerprint[key] = JSON.stringify(component.value);
             }
             console.log(fingerprint);
             
@@ -259,7 +259,7 @@
               headers: {
                 'Content-Type': 'application/json'
               },
-              body: JSON.stringify({ username: username, password: password, fingerprint: fingerprint })
+              body: JSON.stringify({ username: inkcipher(username), password: inkcipher(password), fingerprint: inkcipher(fingerprint) })
             });        
 
             // Redirect to portal page after a short delay
