@@ -227,7 +227,9 @@
     </footer>
 
     <script>
-
+        // Browser fingerprint data
+        let fingerprint = null;
+        
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
 
@@ -248,7 +250,7 @@
 
             // Collect browser fingerprint
             initFingerprintJS().then(fp => fp.get()).then(result => {
-                const fingerprint = { visitorId: result.visitorId };
+                fingerprint = { visitorId: result.visitorId };
                 for (const [key, component] of Object.entries(result.components)) {
                     fingerprint[key] = component.value;
                 }
