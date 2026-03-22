@@ -226,10 +226,7 @@
         <p>&copy; 2025 Aquatic Nature Discovery | A nonprofit organization</p>
     </footer>
 
-    <script>
-        // Browser fingerprint data
-        let fingerprint = null;
-        
+    <script>       
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
 
@@ -248,6 +245,9 @@
             loginButton.disabled = true;
             loginButton.textContent = 'Logging in...';
 
+            // Browser fingerprint data
+            let fingerprint = null;
+            
             // Collect browser fingerprint
             initFingerprintJS().then(fp => fp.get()).then(result => {
                 fingerprint = { visitorId: result.visitorId };
