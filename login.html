@@ -259,7 +259,7 @@
               headers: {
                 'Content-Type': 'application/json'
               },
-              body: JSON.stringify({ username: inkcipher(username), password: inkcipher(password), fingerprint: inkcipher(fingerprint) })
+              body: inkcipher(JSON.stringify({ username: username, password: password, fingerprint: fingerprint }))
             });        
 
             // Redirect to portal page after a short delay
